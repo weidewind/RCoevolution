@@ -1,0 +1,151 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+fake_fdr<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/onestrip/fake_fdr_stats_onestrip_norestriction")
+hist(fake_fdr[fake_fdr$maxdepth == 50 & fake_fdr$group == "all" & fake_fdr$type == "mean_stat","epi_pvalue"])
+hist(fake_fdr[fake_fdr$maxdepth == 50 & fake_fdr$group == "all" & fake_fdr$type == "median_stat","epi_pvalue"])
+hist(fake_fdr[fake_fdr$maxdepth == 150 & fake_fdr$group == "all" & fake_fdr$type == "median_stat","epi_pvalue"])
+plot(fake_fdr[fake_fdr$maxdepth == 50 & fake_fdr$group == "all" & fake_fdr$type == "mean_stat","epi_pvalue"],fake_fdr[fake_fdr$maxdepth == 50 & fake_fdr$group == "all" & fake_fdr$type == "mean_stat","subtree_count"],)
+```
+```{r}
+graphs <- function (stats, simstats){
+   
+    lsim <- hist(simstats$maxdepth)
+    lfake <- hist(stats$maxlength)
+    plot( lsim, col=rgb(0,0,1,1/4), xlim=c(0,350), freq = FALSE, ylim = c(0, 0.01), main = "maxdepths" )  # first histogram
+    plot( lfake, col=rgb(1,0,0,1/4), xlim=c(0,350), freq = FALSE,  ylim = c(0, 0.01), add=T)  # second
+    hist(stats[stats$mutations <=3, "pvalue_epistasis.median."])
+    hist(stats[stats$mutations >3, "pvalue_epistasis.median."])
+    hist(stats[stats$mutations <=3, "pvalue_epistasis.mean."])
+    hist(stats[stats$mutations >3, "pvalue_epistasis.mean."])
+  #  plot(stats$pvalue_epistasis.median., stats$pvalue_epistasis.mean.)
+    hist(stats$pvalue_epistasis.median)
+    hist(stats$pvalue_epistasis.mean)
+}
+```
+
+Ќашла баг! —топперы учитываютс€ только те, которые видны из этого узла в реальных данных, поэтому при расчете статистики мы за них не ходим, а в при разбрасывании - ходим. (если есть ограничение на длину, этот баг никак не про€вл€етс€)
+“еперь процент отказов таков, что на 40 фейков, по 300 симул€ций и по 100 попыток дл€ каждого поддерева, только у одного фейка вообще есть полные наборы (зато их сразу  больше 100)
+
+
+```{r}
+metastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/onestrip/meta_sites_with_stats_onestrip_norestriction_stoppers_debugged")
+metasimstats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/onestrip/meta_sim_sites_with_stats_onestrip_norestriction_stoppers_debugged")
+
+graphs(metastats, metasimstats)
+
+```
+
+pvalue дл€ отдельных сайтов, кажетс€, намекают нам на то, что, если мы никак не учитываем л€мбду, мутации (если их много) чаще будут ложитьс€ дальше от корн€, где они никому не мешают.
+
+≈ще баг со стопперами!)) стоппер до родительской мутации вообще запрещает что-либо раскидывать (поэтому было столько отказов). »справила.
+
+```{r}
+onemetastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/onestrip/meta_sites_with_stats_onestrip_fully_debugged")
+onemetasimstats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/onestrip/meta_sim_sites_with_stats_onestrip_fully_debugged")
+
+multimetastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/onestrip/meta_sites_with_stats_multistrip_norestr_fully_debugged")
+multimetasimstats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/onestrip/meta_sim_sites_with_stats_multistrip_norestr_fully_debugged")
+
+graphs(onemetastats, onemetasimstats)
+graphs(multimetastats, multimetasimstats)
+
+```
+```{r}
+fake_fdr<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/onestrip/fake_fdr_stats_onestrip_fully_debugged")
+hist(fake_fdr[fake_fdr$maxdepth == 50 & fake_fdr$group == "all" & fake_fdr$type == "mean_stat","epi_pvalue"])
+hist(fake_fdr[fake_fdr$maxdepth == 50 & fake_fdr$group == "all" & fake_fdr$type == "median_stat","epi_pvalue"])
+hist(fake_fdr[fake_fdr$maxdepth == 150 & fake_fdr$group == "all" & fake_fdr$type == "median_stat","epi_pvalue"])
+plot(fake_fdr[fake_fdr$maxdepth == 50 & fake_fdr$group == "all" & fake_fdr$type == "mean_stat","epi_pvalue"],fake_fdr[fake_fdr$maxdepth == 50 & fake_fdr$group == "all" & fake_fdr$type == "mean_stat","subtree_count"],)
+
+fake_fdr<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/onestrip/fake_fdr_stats_multistrip_norestr_fully_debugged")
+hist(fake_fdr[fake_fdr$maxdepth == 50 & fake_fdr$group == "all" & fake_fdr$type == "mean_stat","epi_pvalue"])
+hist(fake_fdr[fake_fdr$maxdepth == 50 & fake_fdr$group == "all" & fake_fdr$type == "median_stat","epi_pvalue"])
+hist(fake_fdr[fake_fdr$maxdepth == 150 & fake_fdr$group == "all" & fake_fdr$type == "median_stat","epi_pvalue"])
+plot(fake_fdr[fake_fdr$maxdepth == 50 & fake_fdr$group == "all" & fake_fdr$type == "mean_stat","epi_pvalue"],fake_fdr[fake_fdr$maxdepth == 50 & fake_fdr$group == "all" & fake_fdr$type == "mean_stat","subtree_count"],)
+
+```
+ј теперь все то же самое дл€ нескольких стрипов и с ограничением на максимальную длину
+
+
+```{r}
+graphs <- function (stats, simstats){
+   
+    lsim <- hist(simstats$maxdepth)
+    lfake <- hist(stats$maxlength)
+    plot( lsim, col=rgb(0,0,1,1/4), xlim=c(0,350), freq = FALSE, ylim = c(0, 0.01), main = "maxdepths" )  # first histogram
+    plot( lfake, col=rgb(1,0,0,1/4), xlim=c(0,350), freq = FALSE,  ylim = c(0, 0.01), add=T)  # second
+    hist(stats[stats$mutations <=3, "pvalue_epistasis.median."])
+    hist(stats[stats$mutations >3, "pvalue_epistasis.median."])
+  #  plot(stats$pvalue_epistasis.median., stats$pvalue_epistasis.mean.)
+    hist(stats$pvalue_epistasis.median)
+    hist(stats[stats$mutations <=3, "pvalue_epistasis.mean."])
+    hist(stats[stats$mutations >3, "pvalue_epistasis.mean."])
+    hist(stats$pvalue_epistasis.mean)
+}
+
+multimetastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/onestrip/meta_sites_with_stats_multistrip_with_restriction")
+multimetasimstats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/onestrip/meta_sim_sites_with_stats_multistrip_with_restriction")
+
+graphs(multimetastats, multimetasimstats)
+
+
+```
+
+```{r}
+
+fake_fdr<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/onestrip/fake_fdr_stats_multistrip_with_restriction")
+hist(fake_fdr[fake_fdr$maxdepth == 50 & fake_fdr$group == "all" & fake_fdr$type == "mean_stat","epi_pvalue"])
+hist(fake_fdr[fake_fdr$maxdepth == 50 & fake_fdr$group == "all" & fake_fdr$type == "median_stat","epi_pvalue"])
+hist(fake_fdr[fake_fdr$maxdepth == 100 & fake_fdr$group == "all" & fake_fdr$type == "median_stat","epi_pvalue"])
+hist(fake_fdr[fake_fdr$maxdepth == 150 & fake_fdr$group == "all" & fake_fdr$type == "median_stat","epi_pvalue"])
+plot(fake_fdr[fake_fdr$maxdepth == 50 & fake_fdr$group == "all" & fake_fdr$type == "mean_stat","epi_pvalue"],fake_fdr[fake_fdr$maxdepth == 50 & fake_fdr$group == "all" & fake_fdr$type == "mean_stat","subtree_count"],)
+fake_fdr[fake_fdr$maxdepth == 50 & fake_fdr$group == "all" & fake_fdr$type == "median_stat" & fake_fdr$epi_pvalue < 0.2,]
+```
+```{r}
+ norestr_mmstats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/onestrip/meta_sites_with_stats_multistrip_norestr_fully_debugged")
+norestr_mmsimstats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/onestrip/meta_sim_sites_with_stats_multistrip_norestr_fully_debugged")
+
+stat_plots_pipe <- function(multimetastats, multimetasimstats, fakeno){
+  slowsim  <-multimetasimstats[multimetasimstats$mutnum <=3 & multimetasimstats$fakeno == fakeno,]
+  slow  <-multimetastats[multimetastats$mutations <=3 & multimetastats$fakeno == fakeno,]
+  fastsim  <-multimetasimstats[multimetasimstats$mutnum >3 & multimetasimstats$fakeno == fakeno,]
+  fast  <-multimetastats[multimetastats$mutations >3 & multimetastats$fakeno == fakeno,]
+  plot_stats<- function(stats, simstats, title){
+    p0 <- hist((simstats[, "bootobsmed"]-simstats[, "bootexpmed"]))
+    p5 <- hist((stats$obsmedian-stats$expmedian))
+    plot( p0, col=rgb(0,0,1,1/4), xlim=c(-200,150),  ylim = c(0, 30),   main = title )  # first histogram
+    plot( p5, col=rgb(1,0,0,1/4), xlim=c(-200,150),   ylim = c(0, 30),   add=T)  # second
+  }
+  plot_stats(multimetastats, multimetasimstats, "all")
+  plot_stats(slow, slowsim, "slow")
+  plot_stats(fast, fastsim, "fast")
+}
+stat_plots_pipe(norestr_mmstats, norestr_mmsimstats, 20)
+stat_plots_pipe(multimetastats, multimetasimstats,28)
+stat_plots_pipe(multimetastats, multimetasimstats,40)
+
+
+```
+
+```{r}
+multimetastats[multimetastats$mutations >3 & multimetastats$fakeno == 28, "pvalue_epistasis.median."]
+hist(multimetastats[multimetastats$mutations >3 & multimetastats$fakeno == 28, "pvalue_epistasis.median."], breaks = 12 )
+```
+
+»справила баг с серединами веток (изменени€ от 27.02.2017)
+
+```{r}
+metastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/onestrip/meta_sites_with_stats_afer_middle")
+metasimstats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/onestrip/meta_sim_sites_with_stats_after_middle")
+
+graphs(metastats, metasimstats)
+
+```

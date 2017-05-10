@@ -1,0 +1,257 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+```{r}
+bh_trues <- function(p, a){
+  bh = rep(0, length(p))
+  for (i in 1:length(p)){
+    if (p[i] <= a*i/length(p)){
+      bh[i] = 1
+    } else {
+      break
+    }
+  }
+  length(bh[bh == 1])
+}
+```
+
+```{r}
+thresholds <- c(0.001, 0.005, 0.01, 0.015,0.0187306292952432, 0.02,0.03,0.030513595,
+ 0.04,0.05,0.06,0.07,0.08,0.09, 0.1)
+
+all_fdr_plot<- function (type = "median_stat", value = "env_pvalue",  nominal_pvalues = thresholds, fake_fdr = fake_fdr, group = "all", plot = TRUE, print = TRUE){
+   wholes <- fake_fdr[fake_fdr$maxdepth == 50 & fake_fdr$group == group & fake_fdr$type == type, value]
+   observations_whole <- sapply (nominal_pvalues, function (e) {
+     length(wholes[wholes <= e])
+  })
+  df <- cbind(nominal_pvalue = nominal_pvalues, distr_adj_pvalue = observations_whole/length(wholes))
+  if (print){
+    print (c(type, value, group, length(wholes)))
+    print(df)
+  }
+  if (plot){
+    plot(nominal_pvalues, observations_whole/length(wholes), main = paste (c( value, ".", type, ".", group, "."), collapse = ""))
+  }
+  return (observations_whole/length(wholes))
+}
+singles_fdr_plot <- function (type = "median", value = "environment", nominal_pvalues = thresholds, expmetastats = expmetastats, onecol = FALSE, plot = TRUE, print = TRUE){
+  val = paste (c("pvalue_", value, ".", type, "."), collapse = "")
+  observations <- sapply (nominal_pvalues, function (e) {
+      nrow(expmetastats[expmetastats[[val]] <= e, ])
+  })
+  df <- cbind(nominal_pvalue = nominal_pvalues, distr_adj_pvalue = observations/nrow(expmetastats))
+  if (print){
+    print (val)
+    if (onecol){
+      print(cat(df[,2],sep="\n"))
+    }else {
+      print(df)
+    }
+  }
+  if (plot){
+    plot(nominal_pvalues, observations/nrow(expmetastats), main = "single sites")
+  }
+  return (df[,2])
+}
+```
+
+
+
+```{r}
+expmetastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expSimCheck/meta_sites_with_stats_nolimmassive2")
+fake_fdr<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expSimCheck/fake_fdr_stats_nolimmassive2")
+
+all_fdr_plot()
+all_fdr_plot(type = "mean_stat")
+all_fdr_plot(value = "epi_pvalue")
+all_fdr_plot(type = "mean_stat",value = "epi_pvalue")
+
+singles_fdr_plot()
+singles_fdr_plot(type = "mean")
+singles_fdr_plot( value = "epistasis")
+singles_fdr_plot(type = "mean",  value = "epistasis")
+
+nominals_h1_nsyn_epi_median <- c(0,0.0001,0.0003,0.0012,0.0054,0.0099,0.022809124,0.0279,0.0382,0.0441,0.047109422,0.0502,0.0548,0.0838)
+nominals_h1_nsyn_epi_mean <- c(0,0.0006,0,0.0013,0.0015,0.0121,0.010204082,0.0272,0.0376,0.0153,0.030906181,0.0245,0.0903,0.4688,0.0351)
+nominals_h1_nsyn_env_median <- c(0.091,0.0827,0.084,0.07237292,0.0645,0.341,0.0586,0.057859599,0.0492,0.0345,0.0366,0.011,0.0090018,0.0083)
+nominals_h1_nsyn_env_mean <- c(0.0657,0.098,0.023934351,0.0736,0.3651,0.0595,0.003135748,0.0636,0.0101,0.0394,0.0492,0.100920184,0.0083)
+singles_fdr_plot( type = "median", value = "epistasis", nominal_pvalues = nominals_h1_nsyn_epi_median)
+singles_fdr_plot( type = "mean", value = "epistasis", nominal_pvalues = nominals_h1_nsyn_epi_mean)
+singles_fdr_plot( type = "median", value = "environment", nominal_pvalues = nominals_h1_nsyn_env_median)
+singles_fdr_plot( type = "mean", value = "environment", nominal_pvalues = nominals_h1_nsyn_env_mean)
+#onesample = expmetastats[expmetastats$fakeno == 12, "pvalue_environment.median."]
+#p = sort(onesample)
+#print(p)
+
+#bh_trues(p, 0.005)
+#bh_trues(p, 0.01)
+#bh_trues(p, 0.05)
+#bh_trues(p, 0.1)
+#bh_trues(p, 0.2)
+```
+
+ѕечатает adjusted.csv: корректирует номинальные p-value отдельных сайтов (nominals.csv, скопированы из эксел€ или напр€мую из nolimreal), базиру€сь на данных фейков дл€ соответствующего белка (meta_sites_with_stats) 
+```{r}
+print_adjusted <-function(expmss, nominals, output){
+  epi_med_adjusted <- singles_fdr_plot( type = "median", value = "epistasis", nominal_pvalues = nominals$epi_median, expmetastats = expmss, onecol =  TRUE, plot= FALSE, print = FALSE)
+  epi_mean_adjusted <- singles_fdr_plot( type = "mean", value = "epistasis", nominal_pvalues = nominals$epi_mean, expmetastats = expmss, onecol =  TRUE, plot= FALSE, print = FALSE)
+  env_med_adjusted <- singles_fdr_plot( type = "median", value = "environment", nominal_pvalues = nominals$env_median, expmetastats = expmss, onecol =  TRUE, plot= FALSE, print = FALSE)
+  env_mean_adjusted <- singles_fdr_plot( type = "mean", value = "environment", nominal_pvalues = nominals$env_mean, expmetastats = expmss, onecol =  TRUE, plot= FALSE, print = FALSE)
+  matr <- cbind (epi_med_adjusted,epi_mean_adjusted,env_med_adjusted,env_mean_adjusted)
+  write.csv(matr, output)
+}
+```
+
+ѕримен€ю вышенаписанную функцию) (фигово гон€ть фейки отдельными кусками и иметь кучу разных названий дл€ одного файла,да? :)
+```{r}
+expmetastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/h1/syn/no_neighbour_changing/meta_sites_with_stats")
+nominals<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/h1/syn/no_neighbour_changing/nominals.csv")
+print_adjusted (expmss= expmetastats, nominals =nominals, "C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/h1/syn/no_neighbour_changing/adjusted.csv")
+
+n2expmetastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n2/nsyn/meta_sites_with_stats_n2_nsyn_massive")
+n2nominals<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n2/nsyn/nominals.csv")
+print_adjusted (expmss= n2expmetastats, n2nominals, "C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n2/nsyn/adjusted.csv")
+
+
+n2synexpmetastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n2/syn/no_neighbour_changing/meta_sites_with_stats_n2_syn_massive")
+n2synnominals<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n2/syn/no_neighbour_changing/nominals.csv")
+print_adjusted (expmss= n2synexpmetastats, n2synnominals, "C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n2/syn/no_neighbour_changing/adjusted.csv")
+```
+```{r}
+n1expmetastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n1/nsyn/meta_sites_with_stats")
+n1nominals<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n1/nsyn/nominals.csv")
+print_adjusted (expmss= n1expmetastats, n1nominals, "C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n1/nsyn/adjusted.csv")
+
+
+n1synexpmetastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n1/syn/no_neighbour_changing/meta_sites_with_stats")
+n1synnominals<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n1/syn/no_neighbour_changing/nominals.csv")
+print_adjusted (expmss= n1synexpmetastats, n1synnominals, "C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n1/syn/no_neighbour_changing/adjusted.csv")
+```
+
+```{r}
+expmetastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/h1/nsyn/meta_sites_with_stats")
+nominals<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/h1/nsyn/nominals.csv")
+print_adjusted (expmss= expmetastats, nominals =nominals, "C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/h1/nsyn/adjusted.csv")
+```
+
+```{r}
+fake_fdr<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n2/syn/no_neighbour_changing/fake_fdr_stats_n2_syn_massive")
+n2synnominals <- c(0.303412926615827)
+all_fdr_plot(type = "median_stat",value = "epi_pvalue", nominal_pvalues = n2synnominals, fake_fdr = fake_fdr)
+epitopes_median_env <- c(0.00450056257032129)
+all_fdr_plot(type = "median_stat",value = "env_pvalue", nominal_pvalues = epitopes_median_env, fake_fdr = fake_fdr, group = "epitopes")
+epitopes_median_env <- c(0.00603925515853045)
+all_fdr_plot(type = "median_stat",value = "env_pvalue", nominal_pvalues = epitopes_median_env, fake_fdr = fake_fdr, group = "epitopes")
+```
+ѕечатает group_adjusted.csv: корректирует номинальные p-value каждой группы сайтов (group_nominals.csv, скопированы из эксел€ или анпр€мую из nolimreal), базиру€сь на данных фейков дл€ соответствующего белка (fake_fdr_stats) 
+```{r}
+get_adj_pvalue_for_row <- function(row, fake_fdr, output){
+  values <- c("epi_enrichment_pvalue","env_enrichment_pvalue","epi_pvalue","env_pvalue")
+  adj_values <- sapply(values, function (e){
+      out <- all_fdr_plot(type = row["type"], value = e, nominal_pvalues = as.numeric(row[e]), fake_fdr = fake_fdr, group = row["group"], plot = FALSE, print = FALSE)
+    #  names(out) <- e
+      out
+      }
+    )
+  nfakes <- nrow(fake_fdr[fake_fdr$group == row["group"] & fake_fdr$type == row["type"] & fake_fdr$maxdepth == row["maxdepth"],])
+  cat(paste(c(adj_values, nfakes), sep=","), file= output, append = T,  fill = T)
+ # return(adj_values)
+}
+
+print_group_adjusted <- function(fake_fdr,group_nominals,output){
+  value_names <- c("adj_epi_enrichment_pvalue","adj_env_enrichment_pvalue","adj_epi_pvalue","adj_env_pvalue", "num_of_valid_fakes")
+  cat(paste(value_names, sep=","), file= output, append = T,  fill = T)
+  adj_values <- apply(group_nominals, 1, get_adj_pvalue_for_row, fake_fdr, output)
+}
+```
+
+```{r}
+
+fake_fdr<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/h1/syn/no_neighbour_changing/fake_fdr_stats")
+group_nominals <- read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/h1/syn/no_neighbour_changing/group_nominals.csv")
+output <- "C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/h1/syn/no_neighbour_changing/group_adjusted.csv"
+
+print_group_adjusted(fake_fdr,group_nominals,output)
+
+```
+
+```{r}
+
+fake_fdr<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/h1/nsyn/fake_fdr_stats")
+group_nominals <- read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/h1/nsyn/group_nominals.csv")
+output <- "C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/h1/nsyn/group_adjusted.csv"
+
+print_group_adjusted(fake_fdr,group_nominals,output)
+
+```
+
+```{r}
+fake_fdr<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n2/syn/no_neighbour_changing/fake_fdr_stats")
+group_nominals <- read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n2/syn/no_neighbour_changing/group_nominals.csv")
+output <- "C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n2/syn/no_neighbour_changing/group_adjusted.csv"
+
+print_group_adjusted(fake_fdr,group_nominals,output)
+```
+
+```{r}
+fake_fdr<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n2/nsyn/fake_fdr_stats")
+group_nominals <- read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n2/nsyn/group_nominals.csv")
+output <- "C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n2/nsyn/group_adjusted.csv"
+
+print_group_adjusted(fake_fdr,group_nominals,output)
+```
+
+```{r}
+fake_fdr<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n1/syn/no_neighbour_changing/fake_fdr_stats")
+group_nominals <- read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n1/syn/no_neighbour_changing/group_nominals.csv")
+output <- "C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n1/syn/no_neighbour_changing/group_adjusted.csv"
+
+print_group_adjusted(fake_fdr,group_nominals,output)
+```
+
+```{r}
+fake_fdr<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n1/nsyn/fake_fdr_stats")
+group_nominals <- read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n1/nsyn/group_nominals.csv")
+output <- "C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n1/nsyn/group_adjusted.csv"
+
+print_group_adjusted(fake_fdr,group_nominals,output)
+```
+
+```{r}
+fake_fdr<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/h3/syn/no_neighbour_changing/fake_fdr_stats")
+group_nominals <- read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/h3/syn/no_neighbour_changing/group_nominals.csv")
+output <- "C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/h3/syn/no_neighbour_changing/group_adjusted.csv"
+
+print_group_adjusted(fake_fdr,group_nominals,output)
+```
+
+```{r}
+fake_fdr<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/h3/nsyn/fake_fdr_stats")
+group_nominals <- read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/h3/nsyn/group_nominals.csv")
+output <- "C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/h3/nsyn/group_adjusted.csv"
+
+print_group_adjusted(fake_fdr,group_nominals,output)
+```
+
+```{r}
+times <- read.table("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expSimCheck/tracktime", stringsAsFactors = FALSE)
+tosec <- function(time){
+  tt <- as.numeric(unlist(strsplit(time, ":")))
+  t <- tt[1]*3600+tt[2]*60 +tt[3]
+}
+times <- unlist(times)
+secs <- sapply(times, function(e){
+  tosec(e)
+  })
+times
+secs
+plot (secs)
+```
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).

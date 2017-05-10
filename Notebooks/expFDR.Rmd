@@ -1,0 +1,303 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+source(file.path(getwd(),"FDR_hists.R", fsep = .Platform$file.sep))
+```
+
+h1 nsyn 
+
+```{r}
+fake_fdr<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expSimCheck/fake_fdr_stats_nolimmassive3")
+
+hists (group = "all", breaks = 5)
+hists (group = "all", breaks = 10)
+hists (maxdepth = 100, group = "all")
+hists (group = "increased_binding")
+hists (group = "increased_binding",value = "enrichment_pvalue")
+hists (group = "internal",value = "enrichment_pvalue")
+hists (group = "leading_kr",value = "enrichment_pvalue")
+hists (group = "surface",value = "enrichment_pvalue")
+hists (group = "antigenic_ren",value = "enrichment_pvalue")
+```
+
+```{r}
+
+expmetastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expSimCheck/meta_sites_with_stats_nolim2")
+expmetasimstats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expSimCheck/meta_sim_sites_with_stats_nolim2")
+
+graphs(expmetastats, expmetasimstats)
+maxlen_graphs (expmetastats, expmetasimstats)
+hist(expmetastats[expmetastats$mutations > 3 & expmetastats$pvalue_environment.median. < 0.2 & expmetastats$maxlength > 50,"pvalue_environment.median."])
+```
+
+h1/syn/no_neighbour_changing
+
+```{r}
+fake_fdr<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/h1/syn/no_neighbour_changing/fake_fdr_stats")
+
+hists (group = "all", breaks = 5)
+hists (group = "all", breaks = 10)
+hists (maxdepth = 100, group = "all")
+```
+
+```{r}
+
+expmetastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/h1/syn/no_neighbour_changing/meta_sites_with_stats")
+expmetasimstats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/h1/syn/no_neighbour_changing/meta_sim_sites_with_stats")
+
+graphs(expmetastats, expmetasimstats)
+maxlen_graphs (expmetastats, expmetasimstats)
+hist(expmetastats[expmetastats$mutations > 3 & expmetastats$pvalue_environment.median. < 0.2 & expmetastats$maxlength > 50,"pvalue_environment.median."])
+```
+
+n2/nsyn/
+
+```{r}
+fake_fdr<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n2/nsyn/fake_fdr_stats_n2_nsyn_massive")
+
+hists (group = "all", breaks = 5)
+hists (group = "all", breaks = 10)
+hists (maxdepth = 100, group = "all")
+hists (group = "epitopes")
+hists (group = "epitopes",value = "enrichment_pvalue")
+```
+```{r}
+
+expmetastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n2/nsyn/meta_sites_with_stats_n2_nsyn")
+expmetasimstats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n2/nsyn/meta_sim_sites_with_stats_n2_nsyn")
+
+graphs(expmetastats, expmetasimstats)
+maxlen_graphs (expmetastats, expmetasimstats)
+hist(expmetastats[expmetastats$mutations > 3 & expmetastats$pvalue_environment.median. < 0.2 & expmetastats$maxlength > 50,"pvalue_environment.median."])
+```
+
+
+
+n2/syn/no_neighbour_changing
+
+```{r}
+fake_fdr<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n2/syn/no_neighbour_changing/fake_fdr_stats_n2_syn_massive")
+
+hists (group = "all", breaks = 5)
+hists (group = "all", breaks = 10)
+hists (maxdepth = 100, group = "all")
+hists (group = "epitopes")
+hists (group = "epitopes",value = "enrichment_pvalue")
+
+```
+```{r}
+
+expmetastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n2/syn/no_neighbour_changing/meta_sites_with_stats_n2_syn_massive")
+expmetasimstats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n2/syn/no_neighbour_changing/meta_sim_sites_with_stats_n2_syn_massive")
+
+graphs(expmetastats, expmetasimstats)
+maxlen_graphs (expmetastats, expmetasimstats)
+hist(expmetastats[expmetastats$mutations > 3 & expmetastats$pvalue_environment.median. < 0.2 & expmetastats$maxlength > 50,"pvalue_environment.median."])
+```
+
+
+n1/nsyn/
+```{r}
+fake_fdr<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n1/nsyn/fake_fdr_stats")
+
+hists (group = "all", breaks = 5)
+hists (group = "all", breaks = 10)
+hists (maxdepth = 100, group = "all")
+hists (group = "epitopes")
+hists (group = "epitopes",value = "enrichment_pvalue")
+```
+n1/nsyn/skipstoppers
+```{r}
+fake_fdr<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n1/nsyn/skipstoppers/fake_fdr_stats")
+
+hists (group = "all", breaks = 5)
+hists (group = "all", breaks = 10)
+hists (maxdepth = 100, group = "all")
+hists (group = "epitopes")
+hists (group = "epitopes",value = "enrichment_pvalue")
+```
+
+n1/nsyn/
+```{r}
+
+expmetastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n1/nsyn/meta_sites_with_stats_n2_nsyn")
+expmetasimstats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n1/nsyn/meta_sim_sites_with_stats_n2_nsyn")
+
+graphs(expmetastats, expmetasimstats)
+maxlen_graphs (expmetastats, expmetasimstats)
+hist(expmetastats[expmetastats$mutations > 3 & expmetastats$pvalue_environment.median. < 0.2 & expmetastats$maxlength > 50,"pvalue_environment.median."])
+```
+n1/syn/no_neighbour_changing
+
+```{r}
+fake_fdr<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n1/syn/no_neighbour_changing/fake_fdr_stats")
+
+hists (group = "all", breaks = 5)
+hists (group = "all", breaks = 10)
+hists (maxdepth = 100, group = "all")
+hists (group = "epitopes")
+hists (group = "epitopes",value = "enrichment_pvalue")
+
+```
+```{r}
+
+expmetastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n1/syn/no_neighbour_changing/meta_sites_with_stats")
+expmetasimstats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n1/syn/no_neighbour_changing/meta_sim_sites_with_stats")
+
+graphs(expmetastats, expmetasimstats)
+maxlen_graphs (expmetastats, expmetasimstats)
+hist(expmetastats[expmetastats$mutations > 3 & expmetastats$pvalue_environment.median. < 0.2 & expmetastats$maxlength > 50,"pvalue_environment.median."])
+```
+h3/nsyn/
+
+```{r}
+fake_fdr<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/h3/nsyn/fake_fdr_stats")
+
+hists (group = "all", breaks = 5)
+hists (group = "all", breaks = 10)
+hists (maxdepth = 100, group = "all")
+hists (group = "surface")
+hists (group = "surface",value = "enrichment_pvalue")
+```
+
+```{r}
+
+expmetastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/h3/nsyn/meta_sites_with_stats")
+expmetasimstats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/h3/nsyn/meta_sim_sites_with_stats")
+
+graphs(expmetastats, expmetasimstats)
+maxlen_graphs (expmetastats, expmetasimstats)
+hist(expmetastats[expmetastats$mutations > 3 & expmetastats$pvalue_environment.median. < 0.2 & expmetastats$maxlength > 50,"pvalue_environment.median."])
+```
+h3/syn/no_neighbour_changing
+
+```{r}
+fake_fdr<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/h3/syn/no_neighbour_changing/fake_fdr_stats")
+
+hists (group = "all", breaks = 5)
+hists (group = "all", breaks = 10)
+hists (maxdepth = 100, group = "all")
+hists (group = "surface")
+hists (group = "surface",value = "enrichment_pvalue")
+
+```
+```{r}
+
+expmetastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/h3/syn/no_neighbour_changing/meta_sites_with_stats")
+expmetasimstats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/h3/syn/no_neighbour_changing/meta_sim_sites_with_stats")
+
+graphs(expmetastats, expmetasimstats)
+maxlen_graphs (expmetastats, expmetasimstats)
+hist(expmetastats[expmetastats$mutations > 3 & expmetastats$pvalue_environment.median. < 0.2 & expmetastats$maxlength > 50,"pvalue_environment.median."])
+```
+Рассматриваю вблизи сайты с одной-тремя мутациями (на n2)
+
+```{r}
+
+slowgraphs <- function (stats, simstats){
+  old.par <- par(mfrow=c(3, 2))
+  hist(stats[stats$mutations == 1, "pvalue_epistasis.median."], main = "median, epi, =1")
+  hist(stats[stats$mutations ==1, "pvalue_environment.median."], main = "median, env, =1")
+  hist(stats[stats$mutations ==2, "pvalue_epistasis.median."], main = "median, epi, =2")
+  hist(stats[stats$mutations ==2, "pvalue_environment.median."], main = "median, env, =2")
+  hist(stats[stats$mutations ==3, "pvalue_epistasis.median."], main = "median, epi, =3")
+  hist(stats[stats$mutations ==3, "pvalue_environment.median."], main = "median, env, =3")
+  par <- old.par
+  old.par <- par(mfrow=c(3, 2))
+  hist(stats[stats$mutations ==1, "pvalue_epistasis.mean."], main = "mean, epi, =1")
+  hist(stats[stats$mutations ==1, "pvalue_environment.mean."], main = "mean, env, =1")
+  hist(stats[stats$mutations ==2, "pvalue_epistasis.mean."], main = "mean, epi, =2")
+  hist(stats[stats$mutations ==2, "pvalue_environment.mean."], main = "mean, env, =2")
+    hist(stats[stats$mutations ==3, "pvalue_epistasis.mean."], main = "mean, epi, =3")
+  hist(stats[stats$mutations ==3, "pvalue_environment.mean."], main = "mean, env, =3")
+  par <- old.par
+}
+
+```
+
+```{r, fig.width = 9, fig.height = 7}
+expmetastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n2/nsyn/meta_sites_with_stats_n2_nsyn")
+expmetasimstats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n2/nsyn/meta_sim_sites_with_stats_n2_nsyn")
+slowgraphs(expmetastats, expmetasimstats)
+site_node = "157_INTNODE4476"
+cut_node <- function (site_node = "157_INTNODE4476"){
+  substring(site_node, nchar(site_node)-3, nchar(site_node))
+}
+
+node_numbers <- sapply (as.character(expmetastats[expmetastats$mutations ==1, "site_node"]), function(e){
+  cut_node(e[[1]])
+})
+plot(as.numeric(node_numbers), expmetastats[expmetastats$mutations ==1, "pvalue_environment.mean."])
+pval_to_node <- lm(expmetastats[expmetastats$mutations ==1, "pvalue_environment.mean."] ~ as.numeric(node_numbers) )
+summary(pval_to_node)
+abline(pval_to_node)
+plot(expmetastats[expmetastats$mutations ==1, "maxlength"], expmetastats[expmetastats$mutations ==1, "pvalue_environment.mean."])
+abline(lm( expmetastats[expmetastats$mutations ==1, "pvalue_environment.mean."] ~  expmetastats[expmetastats$mutations ==1, "maxlength"]))
+```
+Смотрим на отдельные узлы:
+Проверим распределения pvalue для отдельных узлов (по куче фейков, не глядя на число мутаций) на равномерность (К-С)
+```{r}
+cut_node <- function (site_node = "157_INTNODE4476"){
+  substring(site_node, nchar(site_node)-3, nchar(site_node))
+}
+
+
+aliens <- function(expmetastats,site_node_vector){
+    node_numbers <- sapply (site_node_vector, function(e){
+     cut_node(e[[1]])
+    })
+    node_pvalues <- sapply(unique(node_numbers), function (e){
+    regex <- paste(c(".*_INTNODE", e, "$"), collapse = "")
+    pvalues <- expmetastats[grep(regex,expmetastats$site_node),"pvalue_environment.mean."]
+    if (length(pvalues) <3){
+      return ("NA")
+    }
+    ks.res <- ks.test(pvalues, "punif")
+    ks.res$p.value
+      })
+    print(unique(node_numbers))
+    print (node_pvalues)
+
+}
+```
+
+```{r}
+expmetastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n2/nsyn/meta_sites_with_stats_n2_nsyn")
+sn_vector_singles <- as.character(expmetastats[expmetastats$mutations ==1, "site_node"])
+sn_vector_all <-as.character(expmetastats$site_node)
+aliens(expmetastats,sn_vector_all)
+
+h1expmetastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expSimCheck/meta_sites_with_stats_nolimmassive2")
+h1sn_vector_all <-as.character(h1expmetastats$site_node)
+aliens(h1expmetastats,h1sn_vector_all)
+
+n1expmetastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n1/syn/no_neighbour_changing/meta_sites_with_stats")
+n1sn_vector_all <-as.character(n1expmetastats$site_node)
+aliens(n1expmetastats,n1sn_vector_all)
+
+```
+```{r}
+n1expmetastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/expFDR/n1/syn/no_neighbour_changing/meta_sites_with_stats")
+n1sn_vector_all <-as.character(n1expmetastats$site_node)
+aliens(n1expmetastats,n1sn_vector_all)
+
+```
+Отобрала по самому одиозному узлу из nsyn n2, nsyn h1. Последний - с длинными ветками (и веток в поддереве совсем мало), такими, что расхождение между лямбда*l (фейк) и 1- exp(-лямбда*l) (симуляция) становится существенным (вероятность посадить мутацию на длинную ветку в фейке становится сильно больше, чем в симуляции; теперь все упирается в то, что длины веток могут быть связаны с расстоянием).
+```{r}
+pvals <- expmetastats[grep(".*_INTNODE4618$",expmetastats$site_node),"pvalue_environment.mean."]
+print(pvals)
+hist(pvals)
+
+pvals <- h1expmetastats[grep(".*_INTNODE1247$",h1expmetastats$site_node),"pvalue_environment.mean."]
+print(pvals)
+hist(pvals)
+
+```
+наиболее устрашающий узел из syn n1
+```{r}
+pvals <- n1expmetastats[grep(".*_INTNODE2473$",n1expmetastats$site_node),"pvalue_environment.mean."]
+print(pvals)
+hist(pvals)
+```

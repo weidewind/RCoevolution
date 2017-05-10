@@ -1,0 +1,330 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Распределение p-value для фейковых деревьев (полученных переразбрасыванием мутаций) должно быть равномерным. Проверим, так ли это. 
+Исходный файл получен скриптом grep_fdr.pl, который суммирует данные из папок evopoisson/output/fake_test/nsyn/maxpath_not_subtracted/fdr_fake_somenumber, порожденные FDR_all.pl)
+```{r}
+cs <- read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/h1_460new_fdr")
+r <- cs[cs$restr == 100 & cs$stat == "median_stat", ]
+d <- r[r$env <=0.1,]
+d
+```
+
+
+```{r}
+draw_hists <- function(file, restriction, stat){
+    cs <- read.csv(file)
+    r <- cs[cs$restr == restriction & cs$stat == stat, ]
+    hist(r$epi, breaks=30)
+    hist(r$env, breaks=30)
+}
+
+
+```
+
+Распределение p-values для фейковых наблюдений (белок целиком) -  для 200 наблюдений, 10000 итераций
+
+```{r}
+draw_hists("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/h1_200_fdr", 100,"median_stat")
+draw_hists("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/h1_200_fdr", 100,"mean_stat")
+```
+
+То же для 1000 наблюдений, 10000 итераций
+Вторая строка: 500 наблюдений, 5000 итераций, новые итерации (fake_new_iterations)
+Третья строка: 500 наблюдений, 5000 итераций, новые итерации, при каждой итерации создается новый клон (fake_new_clones)
+```{r}
+draw_hists("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/h1_allnew_fdr", 100,"median_stat")
+draw_hists("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/h1_allnew_iterations_fdr", 50,"median_stat")
+draw_hists("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/h1_allnew_iterations_fdr", 150,"median_stat")
+draw_hists("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/h1_allnew_clones_fdr", 100,"median_stat")
+```
+```{r}
+#draw_hists("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/h1_allnew_fdr", 50,"mean_stat")
+draw_hists("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/h1_allnew_iterations_fdr", 50,"mean_stat")
+#draw_hists("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/h1_allnew_clones_fdr", 50,"mean_stat")
+#draw_hists("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/h1_allnew_fdr", 150,"mean_stat")
+draw_hists("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/h1_allnew_iterations_fdr", 100,"mean_stat")
+
+draw_hists("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/h1_allnew_iterations_fdr", 150,"mean_stat")
+#draw_hists("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/h1_allnew_clones_fdr", 150,"mean_stat")
+```
+
+Посмотрим на распределение самой статистики (взята из файла fdr_fake_1(или 10)/h1_gulpselector_vector_boot_median_test_100_all), может быть, есть (не)естественное ограничение на ее значения, и все экстремальные значения скапливаются в точке этого минимума? Это объяснило бы, почему так мало маленьких p-value. 
+Но нет, распределение выглядит пристойно, непонятно, как из таких красивых, слюшай, распределений получаются столь неравномерные распределения pvalue
+
+```{r}
+medstat<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/h1_boot_median_stats_fake_1.txt")
+hist(medstat$obs-medstat$exp, breaks = 20)
+medstat<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/fake_new_iterations/fake_1_50_median.txt")
+hist(medstat$obs-medstat$exp, breaks = 20, xlim= range(-20, 30), ylim = range(0,1200))
+mean(medstat$obs-medstat$exp)
+min(medstat$obs-medstat$exp)
+medstat<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/fake_new_iterations/fake_10_50_median.txt")
+hist(medstat$obs-medstat$exp, breaks = 20, xlim= range(-20, 30), ylim = range(0,1200))
+mean(medstat$obs-medstat$exp)
+min(medstat$obs-medstat$exp)
+meanstat<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/h1_boot_mean_stats_fake_1.txt")
+hist(meanstat$obs-meanstat$exp, breaks = 20)
+var(meanstat$obs-meanstat$exp)
+```
+Посмотрим на значения наблюдаемых (и ожидамеых) медиан для сэмплов с разным p-value (медианы для 1000 фейков из fake_test).
+
+```{r}
+dat<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/h1_allnew_iterations_fdr")
+dat<- dat[dat$restr==100 & dat$stat == "median_stat",]
+lowpval <-dat[dat$env<0.05,]
+hist(dat$obsmedian-dat$expmedian,breaks=40)
+hist(lowpval$obsmedian-lowpval$expmedian,breaks=40) 
+```
+Распределения статистик фейков и симуляций вроде похожи, но что там с левым хвостом?
+Распределение статистики для симуляции, внимание, взято для одного фейкового наблюдения
+
+```{r}
+medstat<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/fake_new_iterations/fake_10_50_median.txt")
+dat<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/h1_allnew_iterations_fdr")
+dat<- dat[dat$restr==50 & dat$stat == "median_stat",]
+
+iterations_lefttail <-medstat[medstat$obs-medstat$exp < 0,]
+hist(iterations_lefttail$obs-iterations_lefttail$exp, breaks = 10, xlim= range(-15, 0), ylim = range(0,2),freq=FALSE)
+fake_lefttail <- dat[dat$obsmedian-dat$expmedian < 0,]
+hist(fake_lefttail$obsmedian-fake_lefttail$expmedian,breaks=10, xlim= range(-15, 0), ylim = range(0,2),freq=FALSE)
+iterations_righttail <-medstat[medstat$obs-medstat$exp > 10,]
+hist(iterations_righttail$obs-iterations_righttail$exp, breaks = 10, xlim= range(10, 25), ylim = range(0,2),freq=FALSE)
+fake_righttail <- dat[dat$obsmedian-dat$expmedian > 10,]
+hist(fake_righttail$obsmedian-fake_righttail$expmedian,breaks=10, xlim= range(10, 25), ylim = range(0,2),freq=FALSE)
+```
+
+```{r}
+hist(dat$obsmedian,breaks=20, ylim=range(0:250), xlim=range(50:250))
+hist(lowpval$obsmedian,breaks=20,  xlim=range(50:250))
+hist(dat$expmedian,breaks=20, ylim=range(0:250), xlim=range(50:250))
+hist(lowpval$expmedian,breaks=20, xlim=range(50:250))
+```
+Действительно ли столь невероятно получить так мало маленьких p-value? Да. А после пересчета на 520 новых итераций? Все еще да
+```{r}
+dbinom(11, size=1000, prob=0.05)+dbinom(10, size=1000, prob=0.05)+dbinom(9, size=1000, prob=0.05)+dbinom(8, size=1000, prob=0.05)
+dbinom(14, size=520, prob=0.05)+dbinom(13, size=520, prob=0.05)+dbinom(12, size=520, prob=0.05)+dbinom(11, size=520, prob=0.05)+dbinom(10, size=520, prob=0.05)
+
+```
+Как выглядит распределение медианной статистики для сэмплов с хорошими pvalue по срединной статистике?
+```{r}
+
+
+median_for_mean<- function(type = "env", threshold = 0.05){
+  mycsv<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/h1_allnew_iterations_fdr")
+  newdat<- mycsv[mycsv$restr==100 & mycsv$stat == "mean_stat",]
+  lowmean <-newdat[newdat[[type]]<threshold,]
+  hist(lowmean$obsmean-lowmean$expmean,breaks=20) 
+  hist(lowmean$obsmedian-lowmean$expmedian,breaks=20)
+  folders = mycsv[mycsv$restr==100 & mycsv$stat == "mean_stat" & mycsv[[type]]<threshold, 1]
+
+  median_with_lowmean <- mycsv[mycsv$folder %in% folders,]
+  median_with_lowmean <- median_with_lowmean[median_with_lowmean$restr==100 & median_with_lowmean$stat == "median_stat",]
+  median_with_lowmean
+  hist(median_with_lowmean[[type]], xlab = "median stat p-value")
+}
+
+
+median_for_mean(type="env")
+
+```
+А вот это, извините, распределение pvalue для фейковых сайтов! 
+("распределение"  для одного сайта - это, на самом деле, pvalue для всех сайтов на этом узле (по одной штуке на каждый сайт и каждый maxdepth) )
+```{r}
+sites<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/h1_sites_fdr")
+chosen_one <- sites[sites$node == "INTNODE2429" & sites$depth == 50,] # INTNODE2429 2434 2406 
+hist(chosen_one$pvalue_epi_median)
+hist(sites$pvalue_epi_median)
+hist(chosen_one$pvalue_epi_mean)
+subset <- sites[sites$mutations >3,]
+hist(subset$pvalue_epi_median)
+```
+
+Сравним распределение статистики для одного узла, получающееся на симуляциях и на фейковых датасетах. Да, они разные.
+Добавили еще фейковых сэмплов, и добавили значения статистики в файл, но суть осталась прежней (h1_sites_fdr_with_stats тоже порожден grep_site_fdr.pl)
+Вытащили из случайного места симуляционное распределение статистики для узла (они все одинаковы. должны быть.)
+
+Здесь еще можно посмотреть на распределение p-value для одного сайтоузла, тк тут около 50 повторов, но данных слишком мало)
+```{r}
+sites<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/h1_sites_fdr_with_stats")
+chosen_one <- sites[sites$node == "INTNODE2429" & sites$site == 238 & sites$depth == 50,]
+chosen_one
+hist(as.numeric((as.character(chosen_one$pvalue_epistasis_median))))
+hist(chosen_one$obs_median-chosen_one$exp_median, freq=FALSE, ylim = range(0,0.04), xlim = range(-200,200)) # fake distribution
+#+ geom_histogram(aes(y = ..density..))
+ggplot(dataset1, aes(x = site$obs-site$exp))  + geom_density(adjust = 3)
+site<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/2429_iterations.txt")
+hist(site$obs-site$exp, freq=FALSE, ylim = range(0,0.05), xlim = range(-200,200)) # simulation distribution
+#lines(density(site$obs-site$exp))             # add a density estimate with defaults
+lines(density(site$obs-site$exp, adjust=2), lty="dotted")   # add another "smoother" density
+#install.packages("ggplot2")
+library(ggplot2)
+dataset = data.frame(site$obs-site$exp)
+#+ geom_histogram(aes(y = ..density..))
+ggplot(dataset, aes(x = site$obs-site$exp))  + geom_density(adjust = 3)
+
+```
+
+```{r}
+sites<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/h1_sites_fdr_with_stats")
+velocity <- sapply(sites$mutations, function (e){
+  if (is.na(e)) {"unknown"}
+  else if(e <= 3) {"slow-evolving sites"}
+  else{"fast-evolving sites"}
+} )
+gr <- rep("simulations (equal \nevolution rate for all sites)", length(velocity))
+sites <- data.frame(sites, velocity,gr)
+# & sites$mutations <= 3,
+filtered = sites[sites$depth == 50 & sites$velocity != "unknown", ]
+head(filtered, 10)
+hist(filtered$obs_median-filtered$exp_median, freq=FALSE, ylim = range(0,0.04), xlim = range(-200,200)) # fake distribution
+dat = filtered$obs_median-filtered$exp_median
+dataset1 = data.frame(dat)
+length(dataset1$velocity)
+length(dataset1)
+ggplot(dataset1, aes(x = dat))  + geom_density(adjust = 3, aes(x = dat, color = filtered$velocity),size=2) +geom_density(aes(x = dat, color = filtered$gr), adjust = 3,size=2) + labs(x="S", color = "") + scale_x_continuous(limits = c(-150, 150)) + theme_grey(base_size = 18)
+#fast = sites[sites$depth == 50 & sites$mutations > 3,]
+#head(fast)
+#hist(fast$obs_median-fast$exp_median, freq=FALSE, ylim = range(0,0.04), xlim = range(-200,200)) # fake distribution
+#dat2 = fast$obs_median-fast$exp_median
+#dataset2 = data.frame(dat2)
+#ggplot(dataset2, aes(x = dat2))  + geom_density(adjust = 3) 
+```
+
+А действительно ли наш shuffler разбрасывает мутации пропорционально длине веток? (shuffler_check.pl) Ага.
+```{r}
+branches<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/shuffler_sanity_check_shuffled.csv")
+plot(branches$length, branches$mutnum)
+abline(0,1)
+branches[branches$length > 80,]
+sum(branches$mutnum)
+sum(branches$bkgrmutnum)
+sum(branches$length)
+branches[branches$length != branches$bkgrmutnum+branches$mutnum,]
+branches<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/shuffler_sanity_check_realdata.csv")
+plot(branches$length, branches$mutnum)
+abline(0,1)
+sum(branches$mutnum)
+sum(branches$bkgrmutnum)
+sum(branches$length)
+branches[branches$length != branches$bkgrmutnum+branches$mutnum,]
+branches[branches$nodename == "INTNODE2435",]
+```
+
+```{r}
+branches<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/shuffler_check_real_realdata")
+sum(branches$mutnum)
+sum(branches$bkgrmutnum)
+sum(branches$length)
+```
+Возможно, наши безумные распределения pvalue получаются так: в реальных данных число узлов в группе намного меньше, чем в симуляции (если мы говорим об одном сайтоузле, то в реальных данных наблюдение одно, а в симуляции их может быть много - сколько сайтов мутировало на этом узле, столько у нас и наблюдений). В игру вступает ЦПТ: в симуляциях уходы всегда гораздо ближе к середине просто из-да того, что их больше!
+Как проверить? на длинные ветки должно попадать больше родительских мутаций, стало быть, для них неравномерность pvalue должна быть сильнее выражена.
+```{r}
+sites<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/h1_sites_fdr_with_stats", stringsAsFactors=FALSE)
+
+#grep("[)(,)](.*:[0-9]+)", c("abc", "def", "cba a", "aa"), perl=TRUE, value=TRUE)
+con <- file("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/Kryazhimsky11/h1.l.r.newick")
+tree <- readLines(con)
+library(stringr)
+intnodes <- str_extract_all(tree, "INTNODE[0-9]+:[0-9]+")[[1]]
+spli <- str_split(intnodes, ":")
+spli[[5]][2]
+node <- sapply(spli, function(e){
+  as.character(e[1])
+})
+dists <- sapply(spli, function(e){
+  as.numeric(e[2])    
+})
+
+dist_df <-data.frame(node,dists, stringsAsFactors=FALSE)
+#head(dist_df)
+#head(sites)
+merged <-merge (sites, dist_df, by = "node", stringsAsFactors=FALSE)
+merged_clean <- merged[merged$dists >0 & merged$depth == 50,]
+#head(merged,10)
+nodes <- unique(merged_clean$node)
+
+freqs<- sapply (nodes, function(e){
+  tail <- nrow(merged_clean[merged_clean$node == e & merged_clean$pvalue_epistasis_median < 0.1,])
+  all<- nrow(merged_clean[merged_clean$node == e,])
+  #print(tail)
+  #print(all)
+  tail/all
+})
+dists <- sapply(names(freqs), function(e){
+  dist_df[dist_df$node == e, "dists"]
+})
+plot(freqs,dists)
+#chosen_one <- sites[sites$node == "INTNODE2429",] # INTNODE2429 2434 2406 
+#nrow(chosen_one[chosen_one$pvalue_epi_median < 0.1,])/nrow(chosen_one)
+
+```
+Теперь каждое поддерево в симуляции приравнивается к отедбльной итерации. Число уходов пока никак не контролируем. 250 итераций, 40 фейков (output/fake_new_iterations/nsyn/maxpath_not_subtracted/no_mutnum_check)
+Идеально.
+Эти горки недвусмысленно намекают, что нужно контролировать число уходов.
+```{r}
+sites<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/h1_sites_fdr_with_stats_clt_no_mutnum_check", stringsAsFactors=FALSE, colClasses = c("pvalue_epistasis_median" = "numeric"))
+head(sites, 10)
+#chosen_one <- sites[sites$node == "INTNODE2429" & sites$depth == 50,] # INTNODE2429 2434 2406 
+#hist(chosen_one$pvalue_epi_median)
+hist(as.numeric(sites$pvalue_epistasis_median))
+#hist(chosen_one$pvalue_epi_mean)
+opar=par(ps=18)
+fast_subset <- sites[sites$mutations > 3,]
+#main="Acclimatization p-values for fast evolving simulated sites"
+hist(fast_subset$pvalue_epistasis_median, main = "", xlab="p-value")
+opar
+slow_subset <- sites[sites$mutations <= 3,]
+hist(slow_subset$pvalue_epistasis_median, main = "", xlab="p-value")
+
+```
+
+А тут число уходов не должно отличаться от реального больше, чем на 20% (output/fake_new_iterations/nsyn/maxpath_not_subtracted/mutnum_check)
+```{r}
+all_sites<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/h1_sites_fdr_with_stats_mutnum_control", stringsAsFactors=FALSE, colClasses = c("pvalue_epistasis_median" = "numeric"))
+sites <- all_sites[all_sites$iterations > 50, ]
+nrow(all_sites) - nrow(sites)
+head(sites, 10)
+#chosen_one <- sites[sites$node == "INTNODE2429" & sites$depth == 50,] # INTNODE2429 2434 2406 
+#hist(chosen_one$pvalue_epi_median)
+hist(as.numeric(sites$pvalue_epistasis_median))
+#hist(chosen_one$pvalue_epi_mean)
+fast_subset <- sites[sites$mutations > 3,]
+opar=par(ps=18)
+hist(fast_subset$pvalue_epistasis_median, xlab="p-value")
+opar
+slow_subset <- sites[sites$mutations <= 3,]
+hist(slow_subset$pvalue_epistasis_median, main="", xlab="p-value")
+
+```
+```{r}
+all_sites<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/h1_sites_fdr_with_stats_mutnum_control", stringsAsFactors=FALSE, colClasses = c("pvalue_epistasis_median" = "numeric"))
+sites <- all_sites[all_sites$iterations > 50, ]
+nrow(all_sites) - nrow(sites)
+head(sites, 10)
+#chosen_one <- sites[sites$node == "INTNODE2429" & sites$depth == 50,] # INTNODE2429 2434 2406 
+#hist(chosen_one$pvalue_epi_median)
+hist(as.numeric(sites$pvalue_epistasis_mean))
+#hist(chosen_one$pvalue_epi_mean)
+fast_subset <- sites[sites$mutations > 3,]
+opar=par(ps=18)
+hist(fast_subset$pvalue_epistasis_mean, xlab="p-value")
+opar
+slow_subset <- sites[sites$mutations <= 3,]
+hist(slow_subset$pvalue_epistasis_mean, main="", xlab="p-value")
+
+```
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+```{r}
+all_sites<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/sanityCheck/csv_test.txt", stringsAsFactors=FALSE, colClasses = c("pvalue_epistasis_median" = "numeric"))
+all_sites[all_sites$site ==85 & all_sites$node =="INTNODE2434",]
+```
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).

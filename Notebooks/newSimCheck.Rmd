@@ -1,0 +1,357 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Looking at ~ 300 new simulations for fake sampe (old simulation) WiTH limit on lifetime (mutations in simulated subtrees are closer to ancestor than the maxdepth of the corresponding sample subtree)
+New simulations are shifted to the right, and their poisson expectation is even righter (потому что мы запрещаем мутациям садиться далеко, но дерево там все еще продолжается?)
+
+ observed median: 93.25
+ poisson expected median: 91
+
+ observed mean: 100.332159624413
+ poisson expected mean: 98.9619955253928
+ [1] 95.90727
+[1] 103.2909
+[1] -7.383636
+ 
+ после исправления бага со стопперами
+ 
+ observed median: 124.5
+ poisson expected median: 127
+
+ observed mean: 128.319956616052
+ poisson expected mean: 128.552926094138
+ 
+ [1] 130.4391
+[1] 135.3655
+[1] -4.926396
+
+```{r}
+stats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/fake_shuffle_limits_exist.txt")
+medians <- stats[stats$type == "median",]
+mean(medians$obs)
+mean(medians$exp)
+mean(medians$obs-medians$exp)
+```
+
+Looking at ~ 300 new simulations for fake sampe (old simulation) with NO limits on lifetime
+Same shit.
+
+ observed median: 81.5
+ poisson expected median: 81
+
+ observed mean: 93.4314159292035
+ poisson expected mean: 93.7936825981911
+ [1] 82.19195
+[1] 91.19814
+[1] -9.006192
+
+No limits после исправления бага со стопперами
+ observed median: 79.25
+
+ poisson expected median: 79
+
+ observed mean: 98.1741245136187
+
+ poisson expected mean: 97.2633883454577
+ 
+ 1] 81.36585
+[1] 85.95122 <- yep: расхождение ожидаемого и наблюдаемого в симуляциях стало меньше (раньше пуассон уходил вправо за стопперы). Но оно все равно слишком большое!
+[1] -4.585366
+
+ 
+```{r}
+stats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/fake_shuffle_no_limits.txt")
+medians <- stats[stats$type == "median",]
+mean(medians$obs)
+mean(medians$exp)
+mean(medians$obs-medians$exp)
+```
+
+Когда ограничение на время жизни есть, максимальная глубина в симуляциях все равно бывает больше, чем в сэмпле. Где ошибка? А вот где: В shuffle_muts_on_subtree просто нигде нет ограничения на максимальную глубину - только на максимальную глубину мутации
+
+Убрали ограничение, но при maxdepth 50 pvalue env все равно 0 (при других maxdepth все нормально) (100 sim)
+При этом пуассон от наблюдения в симуляции отличается слабо, как и должно быть, а вот в фейке - сильно!
+
+ observed median: 112.75
+ poisson expected median: 103
+
+ observed mean: 116.69918699187
+ poisson expected mean: 113.727910705643
+ 
+ [1] 125.5465
+[1] 123.5814
+[1] 1.965116
+
+Нашла баг при определении максимального бина, из-за которого концевые бины в итерациях иногда отрезались
+
+observed median: 112.75
+poisson expected median: 103
+
+observed mean: 116.69918699187
+poisson expected mean: 113.727910705643
+ 
+[1] 125.8023
+[1] 123.814
+[1] 1.988372
+
+```{r}
+stats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/fake_shuffle_no_limits_debugged.txt")
+medians <- stats[stats$type == "median",]
+mean(medians$obs)
+mean(medians$exp)
+mean(medians$obs-medians$exp)
+```
+
+
+
+Вероятно: для короткоживущих поддеревьев в симуляциях часто появляются длинные поддеревья. В коротких длинные начальные ветки занимают больше места, и потому расхождение между набл и ожидаемым по пуассону больше, чем в длинных
+ 
+ .. ии я не вижу никакой связи между глубиной поддерева (или даже разницей между глубинами в фейке и в симуляциях) и p-value
+```{r}
+stats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/h1_sites_with_stats")
+simstats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/h1_sim_sites_with_stats")
+
+all_graphs <- function (stats, simstats){
+    mean_maxdepths_diff <- sapply (stats$site_node, function(e){
+      sims <- simstats[simstats$site_node == e,]
+      diff<-  mean(sims$maxdepth) - stats[stats$site_node == e, "maxlength"] # nothing changes when we take max instead of mean
+      if(abs(diff) > 3){
+       # print (c(diff, stats[stats$site_node == e, "pvalue_epistasis.median."], stats[stats$site_node == e, "obsmedian"]-stats[stats$site_node == e, "expmedian"], #mean(sims$bootobsmed) - mean(sims$bootexpmed)))
+      }
+      diff
+      
+    })
+    #mean_maxdepths_diff
+    plot(stats[, "maxlength"], mean_maxdepths_diff)
+    plot(stats[, "maxlength"], abs(stats[, "pvalue_epistasis.median."]-0.5))
+    plot(mean_maxdepths_diff, abs(stats[, "pvalue_epistasis.median."]-0.5))
+    plot(mean_maxdepths_diff, abs(stats[, "pvalue_epistasis.mean."]-0.5))
+    plot(mean_maxdepths_diff, stats[, "obsmedian"]-stats[, "expmedian"])
+    
+    
+    mean_sim_stat_short <- function(maxdepth) {
+    
+        sapply (stats[stats$maxlength < maxdepth, "site_node"], function(e){
+          sims <- simstats[simstats$site_node == e,]
+          diff<-  mean(sims$bootobsmed - sims$bootexpmed) # nothing changes when we take max instead of mean
+      
+      })
+    }
+    
+    mean_sim_stat_long <- function(maxdepth) {
+    
+        sapply (stats[stats$maxlength >= maxdepth, "site_node"], function(e){
+          sims <- simstats[simstats$site_node == e,]
+          diff<-  mean(sims$bootobsmed - sims$bootexpmed) # nothing changes when we take max instead of mean
+      
+      })
+    }
+    
+    
+    sim_stat_short <- function(maxdepth) {
+    
+        sapply (stats[stats$maxlength < maxdepth, "site_node"], function(e){
+          sims <- simstats[simstats$site_node == e,]
+          diff<-  sims$bootobsmed - sims$bootexpmed # nothing changes when we take max instead of mean
+      
+      })
+    }
+    
+    sim_stat_long <- function(maxdepth) {
+    
+        sapply (stats[stats$maxlength >= maxdepth, "site_node"], function(e){
+          sims <- simstats[simstats$site_node == e,]
+          diff<-  sims$bootobsmed - sims$bootexpmed # nothing changes when we take max instead of mean
+      
+      })
+    }
+    
+    
+    
+    p1 <- hist(mean_sim_stat_short(100))
+    p2 <- hist(mean_sim_stat_long(100))
+    p1nm <- hist(unlist(sim_stat_short(100)))
+    p2nm <- hist(unlist(sim_stat_long(100)))
+    p0 <- hist((simstats[, "bootobsmed"]-simstats[, "bootexpmed"]), freq = FALSE)
+    
+    
+    
+    
+    
+    p3 <- hist(stats[stats$maxlength < 100, "obsmedian"]-stats[stats$maxlength < 100, "expmedian"])
+    p4 <- hist(stats[stats$maxlength >= 100, "obsmedian"]-stats[stats$maxlength >= 100, "expmedian"])
+    p5 <- hist((stats$obsmedian-stats$expmedian), freq = FALSE)
+    
+    plot( p1, col=rgb(0,0,1,1/4), xlim=c(-25,15), ylim = c(0, 20),  freq = FALSE, main = "mean_sim_stat (long and short)")  # first histogram
+    plot( p2, col=rgb(1,0,0,1/4), xlim=c(-25,15), ylim = c(0, 20),   freq = FALSE, add=T)  # second
+    
+    plot( p3, col=rgb(0,0,1,1/4), xlim=c(-70,70), ylim = c(0, 20), main = "stats (fake) (long and short)",  freq = FALSE)  # first histogram
+    plot( p4, col=rgb(1,0,0,1/4), xlim=c(-70,70), ylim = c(0, 20),  freq = FALSE,add=T)  # second
+    
+    #plot( p1, col=rgb(0,0,1,1/4), xlim=c(-70,70), ylim = c(0, 20), main = "short (fake and sim mean)")  # first histogram
+    #plot( p3, col=rgb(1,0,0,1/4), xlim=c(-70,70), ylim = c(0, 20), add=T)  # second
+    
+    
+    #plot( p2, col=rgb(0,0,1,1/4), xlim=c(-70,70), ylim = c(0, 20), main = "long (fake and sim mean)")  # first histogram
+    #plot( p4, col=rgb(1,0,0,1/4), xlim=c(-70,70), ylim = c(0, 20), add=T)  # second
+    
+    
+    plot( p1nm, col=rgb(0,0,1,1/4), xlim=c(-70,70), ylim = c(0, 0.05),  freq = FALSE, main = "short (fake and sim)")  # first histogram
+    plot( p3, col=rgb(1,0,0,1/4), xlim=c(-70,70), ylim = c(0, 0.05), freq = FALSE, add=T)  # second
+    
+    
+    plot( p2nm, col=rgb(0,0,1,1/4), xlim=c(-70,70), ylim = c(0, 0.03),  freq = FALSE, main = "long (fake and sim)")  # first histogram
+    plot( p4, col=rgb(1,0,0,1/4), xlim=c(-70,70), ylim = c(0, 0.03),freq = FALSE, add=T)  # second
+    
+    plot( p0, col=rgb(0,0,1,1/4), xlim=c(-150,150), freq = FALSE, ylim = c(0, 0.03), main = "all" )  # first histogram
+    plot( p5, col=rgb(1,0,0,1/4), xlim=c(-150,150), freq = FALSE,  ylim = c(0, 0.03), add=T)  # second
+    
+    lsim <- hist(simstats$maxdepth)
+    lfake <- hist(stats$maxlength)
+    plot( lsim, col=rgb(0,0,1,1/4), xlim=c(0,350), freq = FALSE, ylim = c(0, 0.01), main = "maxdepths" )  # first histogram
+    plot( lfake, col=rgb(1,0,0,1/4), xlim=c(0,350), freq = FALSE,  ylim = c(0, 0.01), add=T)  # second
+}
+
+
+
+
+all_graphs(stats, simstats)
+```
+All: Распределение S для симуляций - левее, чем для фейка (фейк, правда, всего один). Связано ли это с длинами? посмотреть на тотальные распределения длин. Да, они тоже сдвинуты (maxdepth): в фейке длины в среднем больше
+
+Ввели ограничение: в симуляциях запрещаем мутациям ложиться дальше, чем в наблюдении, а при подсчете площадей в симуляциях (subtree_entrenchment) не учитываем те ветки, которые простираются дальше этого ограничения
+
+```{r}
+stats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/h1_sites_with_stats_restriction_2")
+simstats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/h1_sim_sites_with_stats_restriction_2")
+all_graphs(stats, simstats)
+hist(stats$pvalue_epistasis.mean)
+```
+```{r}
+plot(stats$mutations, abs(stats$pvalue_epistasis.median.-0.5))
+hist(stats[stats$mutations <=3, "pvalue_epistasis.mean."])
+hist(stats[stats$mutations >3, "pvalue_epistasis.mean."])
+plot(stats$pvalue_epistasis.median., stats$pvalue_epistasis.mean.)
+hist(stats$pvalue_epistasis.median)
+hist(stats$pvalue_epistasis.mean)
+```
+
+Теперь посмотрим на большое число фейков одновременно (300 итераций, 100 фейков), на белок целиком
+pvalues по медиане распределены вменяемо, а по среднему - ужасающе (то ли мы в фейках прижимаемся к корню, то ли в симуляциях уходим далеко на ветки): ситуация перевернулась. Из-за того, что теперь поддеревья в симуляциях всегда короче или равны фейковым? 
+
+слабое: если дело в разнице длин поддеревьев, то при ограничении = 150 эффект должен быть менее выражен, чем при 50 (и это действительно так)
+
+```{r}
+fake_fdr<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/fake_fdr_stats")
+hist(fake_fdr[fake_fdr$maxdepth == 50 & fake_fdr$group == "all" & fake_fdr$type == "mean_stat","epi_pvalue"])
+hist(fake_fdr[fake_fdr$maxdepth == 50 & fake_fdr$group == "all" & fake_fdr$type == "median_stat","epi_pvalue"])
+plot(fake_fdr[fake_fdr$maxdepth == 50 & fake_fdr$group == "all" & fake_fdr$type == "mean_stat","epi_pvalue"],fake_fdr[fake_fdr$maxdepth == 50 & fake_fdr$group == "all" & fake_fdr$type == "mean_stat","subtree_count"],)
+```
+
+Проверка: взять 2 сета фейков: стареющие и молодеющие, для обоих посмотреть на распределение разностей длин между фейками и соответствующими симуляциями (как в последней гистограмме all_graphs). Если я прав, у молодеющих фейков оно должно быть правее (симуляции коротковаты) 
+
+100 фейков, по 300 симуляций для каждого
+```{r}
+ same_length <- sapply (stats$site_node, function(e){
+      sims <- simstats[simstats$site_node == e,]
+      diff<-  mean(sims$maxdepth) - stats[stats$site_node == e, "maxlength"] # nothing changes when we take max instead of mean
+      if(diff == 0 ){
+        e
+      }
+    })
+n <-stats[unlist(same_length),]
+hist(n$pvalue_epistasis.mean)
+
+```
+
+```{r}
+metastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/meta_sites_with_stats")
+metasimstats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/meta_sim_sites_with_stats")
+
+
+
+graphs <- function (stats, simstats){
+   
+    lsim <- hist(simstats$maxdepth)
+    lfake <- hist(stats$maxlength)
+    plot( lsim, col=rgb(0,0,1,1/4), xlim=c(0,350), freq = FALSE, ylim = c(0, 0.01), main = "maxdepths" )  # first histogram
+    plot( lfake, col=rgb(1,0,0,1/4), xlim=c(0,350), freq = FALSE,  ylim = c(0, 0.01), add=T)  # second
+    hist(stats[stats$mutations <=3, "pvalue_epistasis.mean."])
+    hist(stats[stats$mutations >3, "pvalue_epistasis.mean."])
+  #  plot(stats$pvalue_epistasis.median., stats$pvalue_epistasis.mean.)
+    hist(stats$pvalue_epistasis.median)
+    hist(stats$pvalue_epistasis.mean)
+}
+graphs(metastats, metasimstats)
+
+
+
+
+
+```
+```{r}
+    hist(metastats[metastats$mutations <=3, "pvalue_epistasis.median."])
+    hist(metastats[metastats$mutations >3, "pvalue_epistasis.median."])
+    hist(metastats[metastats$mutations <=4, "pvalue_epistasis.median."])
+    hist(metastats[metastats$mutations >4, "pvalue_epistasis.median."])
+```
+
+
+```{r}
+metastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/meta_sites_with_stats")
+metasimstats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/meta_sim_sites_with_stats")
+x <-c()
+for (e in unique(metastats$fakeno)){
+  fake <-metastats[metastats$fakeno == e ,]
+  simfake <-metasimstats[metasimstats$fakeno == e ,]
+  same_length <- sapply (fake$site_node, function(t){
+      sims <- simfake[simfake$site_node == t,]
+      diff<-  mean(sims$maxdepth) - fake[fake$site_node == t, "maxlength"] 
+      if(diff == 0 ){
+        t
+      }
+  })
+  n <-fake[unlist(same_length),]
+  #print(n)
+  x<-c(x,n$pvalue_epistasis.mean)
+}
+#print (x)
+hist(x)
+```
+
+Исправила баг с серединами веток (изменения от 27.02.2017) (numeric баг еще не исправлен). No lifetime restriction
+
+```{r}
+graphs <- function (stats, simstats){
+   
+    lsim <- hist(simstats$maxdepth)
+    lfake <- hist(stats$maxlength)
+    plot( lsim, col=rgb(0,0,1,1/4), xlim=c(0,350), freq = FALSE, ylim = c(0, 0.01), main = "maxdepths" )  # first histogram
+    plot( lfake, col=rgb(1,0,0,1/4), xlim=c(0,350), freq = FALSE,  ylim = c(0, 0.01), add=T)  # second
+    hist(stats[stats$mutations <=3, "pvalue_epistasis.median."])
+    hist(stats[stats$mutations >3, "pvalue_epistasis.median."])
+    hist(stats[stats$mutations <=3, "pvalue_epistasis.mean."])
+    hist(stats[stats$mutations >3, "pvalue_epistasis.mean."])
+  #  plot(stats$pvalue_epistasis.median., stats$pvalue_epistasis.mean.)
+    hist(stats$pvalue_epistasis.median)
+    hist(stats$pvalue_epistasis.mean)
+}
+```
+
+```{r}
+metastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/meta_sites_with_stats_after_middle")
+metasimstats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/meta_sim_sites_with_stats_after_middle")
+
+graphs(metastats, metasimstats)
+
+```
+Исправлен numeric баг, ограничение на длину жизни
+```{r}
+metastats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/meta_sites_with_stats_restricted_numeric")
+metasimstats<-read.csv("C:/Users/weidewind/Documents/CMD/Coevolution/Influenza/environment_or_epistasis/newSimCheck/meta_sim_sites_with_stats_restricted_numeric")
+
+graphs(metastats, metasimstats)
+
+```
